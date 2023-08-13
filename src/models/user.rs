@@ -26,6 +26,13 @@ pub struct User {
     pub uid: String,
     fields: HashMap<String, Field>,
     pub username: String,
+    pub avatar_url: String,
+    /// hex color
+    pub color: Option<String>,
+
+    #[serde(rename = "desc")]
+    pub description: Option<String>,
+    pub support_desc_markdown: bool,
 
     #[serde(rename = "isAsystem")]
     pub is_a_system: bool,
@@ -126,7 +133,9 @@ impl User {
                 Method::PATCH,
                 &Some(json!({
                     "fields": self.fields,
-                    "isAsystem": self.is_a_system
+                    "isAsystem": self.is_a_system,
+                    "desc": self.description,
+                    "color": self.color
                 })),
                 &None::<String>,
             )

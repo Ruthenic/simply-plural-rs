@@ -20,6 +20,7 @@ mod tests {
             .await
             .expect("Failed to change username!");
         user.is_a_system = !user.is_a_system;
+        user.description = Some(rng.gen_range(0..i32::MAX).to_string());
 
         let field = &mut user.get_fields()[0];
         field.1.name = format!("{}_{}", field.0, rng.gen_range(0..i32::MAX));
