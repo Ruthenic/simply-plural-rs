@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use crate::{client::Client, error::*, models::user::User};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum SPEndpoint {
     Production,
     Pretesting,

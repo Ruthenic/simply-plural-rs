@@ -10,7 +10,6 @@ pub enum SPError {
     UnspecifiedError(String),
 }
 
-#[macro_export]
 macro_rules! bail {
     () => {
         return Err($crate::error::SPError::UnspecifiedError("unknown error".to_string()))
@@ -25,3 +24,5 @@ macro_rules! bail {
         return Err($crate::error::SPError::UnspecifiedError(format!($fmt, $($arg)*)))
     };
 }
+
+pub(crate) use bail;

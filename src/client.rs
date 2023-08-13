@@ -1,19 +1,12 @@
 use reqwest::{
     header::{self, HeaderMap, HeaderValue},
-    Body, Client as ReqwestClient, Method,
+    Client as ReqwestClient, Method, Response,
 };
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{SPEndpoint, SPError};
 
-#[derive(Deserialize)]
-pub struct ApiResponse<C> {
-    pub exists: Option<bool>,
-    pub id: Option<String>,
-    pub content: Option<C>,
-}
-
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Client {
     endpoint: SPEndpoint,
     reqwest_client: ReqwestClient,
@@ -36,21 +29,45 @@ impl Client {
         })
     }
 
-    pub(crate) async fn send<C>(
+    pub(crate) async fn request_json<C>(
         &self,
         path: impl AsRef<str>,
         method: Method,
-        body: Option<impl Into<Body>>,
+        body: &Option<impl Serialize>,
         query: &Option<impl Serialize>,
-    ) -> Result<ApiResponse<C>, SPError>
+    ) -> Result<C, SPError>
     where
         C: DeserializeOwned,
     {
+        let res = self.request_raw(path, method, body, query).await?;
+
+        Ok(res.json::<C>().await?)
+    }
+
+    pub(crate) async fn request_text(
+        &self,
+        path: impl AsRef<str>,
+        method: Method,
+        body: &Option<impl Serialize>,
+        query: &Option<impl Serialize>,
+    ) -> Result<String, SPError> {
+        let res = self.request_raw(path, method, body, query).await?;
+
+        Ok(res.text().await?)
+    }
+
+    async fn request_raw(
+        &self,
+        path: impl AsRef<str>,
+        method: Method,
+        body: &Option<impl Serialize>,
+        query: &Option<impl Serialize>,
+    ) -> Result<Response, SPError> {
         let url = self.get_url(path);
         let mut builder = self.reqwest_client.request(method, url);
 
         if let Some(body) = body {
-            builder = builder.body(body);
+            builder = builder.json(body);
         }
 
         if let Some(query) = query {
@@ -59,7 +76,7 @@ impl Client {
 
         let res = builder.send().await?;
 
-        Ok(res.json::<ApiResponse<C>>().await?)
+        Ok(res)
     }
 
     pub(crate) fn get_url(&self, path: impl AsRef<str>) -> String {
